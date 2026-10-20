@@ -152,6 +152,10 @@ targets:
         PRODUCT_MODULE_NAME: RemuxUITests
         GENERATE_INFOPLIST_FILE: YES
 schemes:
+  RemuxFileProvider:
+    build:
+      targets:
+        RemuxFileProvider: all
   RemuxUIOnly:
     build:
       targets:

@@ -64,16 +64,34 @@ jobs:
         shell: bash
         run: xcodebuild -list -project Remux.xcodeproj
 
+      - name: Create simulator
+        id: simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime_id="$(xcrun simctl list runtimes --json | jq -r '[.runtimes[] | select(.isAvailable == true and .platform == "iOS")] | sort_by(.version | split(".") | map(tonumber)) | last.identifier')"
+          test -n "${runtime_id}"
+          udid="$(xcrun simctl create "RemuxSFTP CI ${GITHUB_RUN_ID}" com.apple.CoreSimulator.SimDeviceType.iPhone-17e "${runtime_id}")"
+          printf 'udid=%s\n' "${udid}" >> "${GITHUB_OUTPUT}"
+          xcrun simctl boot "${udid}"
+
       - name: Build RemuxFileProvider
         shell: bash
+        env:
+          SIMULATOR_UDID: ${{ steps.simulator.outputs.udid }}
         run: |
           set -o pipefail
           xcodebuild build \
             -project Remux.xcodeproj \
-            -target RemuxFileProvider \
+            -scheme RemuxFileProvider \
             -configuration Debug \
-            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,id=${SIMULATOR_UDID}" \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee "${RUNNER_TEMP}/fileprovider-build.log"
+
+      - name: Delete simulator
+        if: always() && steps.simulator.outputs.udid != ''
+        shell: bash
+        run: xcrun simctl delete "${{ steps.simulator.outputs.udid }}"
 
       - name: Upload build log
         if: always()
