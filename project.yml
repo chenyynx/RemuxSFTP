@@ -78,6 +78,7 @@ targets:
     sources:
       - path: RemuxFileProvider/Sources
       - path: RemuxApp/Sources/Domain/SessionTarget.swift
+      - path: RemuxApp/Sources/Domain/Shortcut.swift
       - path: RemuxApp/Sources/Domain/SSHPrivateKeyInspector.swift
       - path: RemuxApp/Sources/Domain/TerminalSettings.swift
       - path: RemuxApp/Sources/Persistence/ApplicationStorage.swift
