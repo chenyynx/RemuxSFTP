@@ -727,6 +727,9 @@ struct FileProviderRemoteServiceFixture {
             into: [
                 ".": Result<String, FileProviderTestSFTPFailure>.success(home),
                 "\(home)/projects": .success("\(home)/projects"),
+                // Mutation paths are re-resolved canonically before the
+                // mutation executes, so regular children resolve to themselves.
+                "\(home)/projects/report.txt": .success("\(home)/projects/report.txt"),
             ]
         ) { paths, pair in
             paths[pair.key] = .success(pair.value)
