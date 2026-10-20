@@ -305,6 +305,11 @@ actor FileProviderMutationCore {
                             )
                         }
                         try Task.checkCancellation()
+                        // Content replacement must overwrite an existing
+                        // destination. The connection layer uses
+                        // posix-rename@openssh.com for that; a server without
+                        // the extension rejects the rename here, which fails
+                        // the save instead of silently skipping it.
                         try await access.renameItem(from: temporary, to: destination)
                         committed = true
                     } catch {

@@ -309,6 +309,11 @@ final class FileProviderReplicatedExtensionCore: @unchecked Sendable {
         if error as? FileProviderMutationValidationError == .symbolicLinkMutation {
             return FileProviderErrorMapper.cannotSynchronize
         }
+        if error as? FileProviderMutationValidationError == .destinationOccupied {
+            // A rename onto an occupied name fails as an occupied destination,
+            // which Files presents as a sync error rather than a generic one.
+            return FileProviderErrorMapper.cannotSynchronize
+        }
         if let itemIdentifier {
             return FileProviderErrorMapper.map(error, itemIdentifier: itemIdentifier)
         }

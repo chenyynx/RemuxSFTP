@@ -341,7 +341,14 @@ private struct FileProviderSFTPOperation: FileProviderRemoteMutationAccess {
         guard metadata.type != .symbolicLink, metadata.type != .other else {
             throw RemuxSFTPClientError.noSuchFile(path.relative)
         }
-        return entry
+        // The final component could have been swapped for an escaping symlink
+        // between the lstat above and the mutation below; re-resolve the
+        // canonical path and require it to stay inside the home. This narrows
+        // the TOCTOU window but cannot eliminate it (the swap can still happen
+        // after this check).
+        let canonical = try await client.realPath(atPath: entry)
+        try safeLinkResolver.ensureContained(canonical, home: canonicalHome)
+        return canonical
     }
 
     private func existingPath(for path: FileProviderRemotePath) async throws -> String {

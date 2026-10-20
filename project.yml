@@ -21,8 +21,8 @@ settings:
       - -lc++
 packages:
   Citadel:
-    url: https://github.com/h3nock/Citadel.git
-    revision: b3f200bf5e8cba9f5537b3643fe4d908b7fcd85c
+    url: https://github.com/chenyynx/Citadel.git
+    revision: 0d13fe3ac96453798d5d75b3f6fc2faff28f9afb
 targets:
   Remux:
     type: application

@@ -111,7 +111,13 @@ extension SFTPClient: RemuxCitadelSFTPConnection {
     }
 
     func remuxRename(from sourcePath: String, to destinationPath: String) async throws {
-        try await rename(at: sourcePath, to: destinationPath)
+        // posix-rename atomically replaces an existing destination; plain
+        // SSH_FXP_RENAME fails with SSH_FX_FAILURE in that case on OpenSSH.
+        if supportsExtension("posix-rename@openssh.com") {
+            try await posixRename(at: sourcePath, to: destinationPath)
+        } else {
+            try await rename(at: sourcePath, to: destinationPath)
+        }
     }
 
     func remuxRemove(atPath path: String) async throws {
