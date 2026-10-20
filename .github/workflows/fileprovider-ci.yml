@@ -1,0 +1,85 @@
+name: File Provider CI
+
+on:
+  push:
+    branches:
+      - feat/file-provider-integration
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fileprovider-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  extension-build:
+    name: Build File Provider extension
+    runs-on: macos-26
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out RemuxSFTP
+        uses: actions/checkout@v5
+
+      - name: Select Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -d /Applications/Xcode_26.4.1.app/Contents/Developer ]]; then
+            sudo xcode-select --switch /Applications/Xcode_26.4.1.app/Contents/Developer
+          fi
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        env:
+          XCODEGEN_VERSION: 2.46.0
+          XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip_path="${RUNNER_TEMP}/xcodegen.zip"
+          curl --fail --location --silent --show-error --output "${zip_path}" \
+            "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip"
+
+          actual_sha256="$(shasum -a 256 "${zip_path}" | awk '{print $1}')"
+          if [[ "${actual_sha256}" != "${XCODEGEN_SHA256}" ]]; then
+            printf 'Checksum mismatch for XcodeGen %s.\n  expected: %s\n  actual:   %s\n' \
+              "${XCODEGEN_VERSION}" "${XCODEGEN_SHA256}" "${actual_sha256}" >&2
+            exit 1
+          fi
+
+          ditto -x -k "${zip_path}" "${RUNNER_TEMP}"
+          printf '%s\n' "${RUNNER_TEMP}/xcodegen/bin" >> "${GITHUB_PATH}"
+          "${RUNNER_TEMP}/xcodegen/bin/xcodegen" --version
+
+      - name: Generate Xcode project
+        shell: bash
+        run: xcodegen generate
+
+      - name: Show targets
+        shell: bash
+        run: xcodebuild -list -project Remux.xcodeproj
+
+      - name: Build RemuxFileProvider
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Remux.xcodeproj \
+            -target RemuxFileProvider \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "${RUNNER_TEMP}/fileprovider-build.log"
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fileprovider-build-log-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/fileprovider-build.log
+          if-no-files-found: ignore
+          retention-days: 7

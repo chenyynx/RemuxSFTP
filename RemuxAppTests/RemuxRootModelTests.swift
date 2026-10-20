@@ -4074,6 +4074,8 @@ final class RemuxRootModelTests: XCTestCase {
             RemuxSSHRootService
         ) async throws -> Void)? = nil,
         publicKeyInstaller: SSHPublicKeyInstaller? = nil,
+        fileProviderStorageMigrator: any FileProviderSharedStorageMigrating = NoOpFileProviderSharedStorageMigrator(),
+        fileProviderDomainReconciler: any FileProviderDomainReconciling = NoOpFileProviderDomainReconciler(),
         terminalScreenModelFactory: RemuxRootModel.TerminalScreenModelFactory? = nil
     ) -> RemuxRootModelHarness {
         let profileRepository = TestConnectionProfileRepository(
@@ -4109,6 +4111,8 @@ final class RemuxRootModelTests: XCTestCase {
             credentialStore: credentialStore,
             trustedHostStore: trustedHostStore,
             publicKeyInstaller: resolvedPublicKeyInstaller,
+            fileProviderStorageMigrator: fileProviderStorageMigrator,
+            fileProviderDomainReconciler: fileProviderDomainReconciler,
             transportFactory: resolvedTransportFactory,
             sshConnectionPrewarmer: resolvedSSHConnectionPrewarmer,
             attachmentTransferServiceFactory: resolvedAttachmentTransferServiceFactory,
