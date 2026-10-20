@@ -63,6 +63,7 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         NSMicrophoneUsageDescription: Remux uses the microphone so you can dictate messages.
         NSSpeechRecognitionUsageDescription: Remux uses on-device speech recognition to turn your dictation into text.
+        NSLocalNetworkUsageDescription: Remux connects to SSH and SFTP servers on your local network.
         RemuxApplicationKeychainAccessGroup: $(AppIdentifierPrefix)dev.remux.app
         RemuxSharedKeychainAccessGroup: $(AppIdentifierPrefix)dev.remux.shared
         UILaunchScreen: {}

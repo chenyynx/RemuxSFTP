@@ -27,7 +27,9 @@ enum FileProviderErrorMapper {
             return NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError)
         }
 
-        if error is SSHAuthResolverError || error is TrustedHostStoreError {
+        if error is SSHAuthResolverError
+            || error is TrustedHostStoreError
+            || error is FileProviderSFTPClientProviderError {
             return fileProviderError(.notAuthenticated)
         }
 

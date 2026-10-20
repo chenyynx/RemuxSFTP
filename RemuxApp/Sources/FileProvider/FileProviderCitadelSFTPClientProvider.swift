@@ -1,6 +1,10 @@
 import Foundation
 import NIOCore
 
+enum FileProviderSFTPClientProviderError: Error, Equatable, Sendable {
+    case unsupportedAuthentication
+}
+
 struct FileProviderCitadelSFTPClientProvider: FileProviderSFTPClientProviding {
     private let sshRootService: RemuxSSHRootService
     private let trustedHosts: TrustedHostStore
@@ -24,12 +28,16 @@ struct FileProviderCitadelSFTPClientProvider: FileProviderSFTPClientProviding {
         authentication: ResolvedSSHAuth,
         operation: @Sendable (any RemuxSFTPFileProviderClient) async throws -> Value
     ) async throws -> Value {
-        let credential: SSHCredential
-        switch authentication.credential {
-        case .password(let password):
-            credential = .password(password)
-        case .privateKey(let privateKey):
-            credential = .privateKey(privateKey)
+        let credential = authentication.credential
+        switch credential {
+        case .password, .privateKey:
+            break
+        case .none:
+            // Tailscale SSH needs the app's check-verification UI; the File
+            // Provider extension cannot present it. Such identities have no
+            // stored credential, so the domain reconciler normally excludes
+            // them before this point.
+            throw FileProviderSFTPClientProviderError.unsupportedAuthentication
         }
 
         let provider = RemuxCitadelSFTPClientProvider(
