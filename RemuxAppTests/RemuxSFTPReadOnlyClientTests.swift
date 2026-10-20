@@ -95,7 +95,7 @@ final class RemuxSFTPReadOnlyClientTests: XCTestCase {
             )
         }
 
-        let dependencies = try RemuxAppDependencies.live()
+        let dependencies = try await MainActor.run { try RemuxAppDependencies.live() }
         let snapshot = try await dependencies.profileRepository.loadSnapshot()
         let requestedHost = ProcessInfo.processInfo.environment[
             "REMUX_WRITABLE_SFTP_SERVER_HOST"

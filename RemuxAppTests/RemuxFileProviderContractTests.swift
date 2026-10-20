@@ -545,17 +545,9 @@ final class RemuxFileProviderContractTests: XCTestCase {
             displayLabel: "Fixture"
         )
 
-        let credential: SSHCredential
-        switch authentication.credential {
-        case .password(let password):
-            credential = .password(password)
-        case .privateKey(let privateKey):
-            credential = .privateKey(privateKey)
-        }
-
         let method = try SSHAuthenticationMethodFactory.make(
             username: authentication.username,
-            credential: credential
+            credential: authentication.credential
         )
         let eventLoop = EmbeddedEventLoop()
         let promise = eventLoop.makePromise(of: NIOSSHUserAuthenticationOffer?.self)
