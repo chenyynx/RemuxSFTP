@@ -4,9 +4,13 @@ RemuxSFTP is a fork of [h3nock/remux](https://github.com/h3nock/remux) that
 adds a writable Apple File Provider extension backed by a direct
 Citadel/SSH SFTP connection. It does not use a relay or a server-side proxy.
 
-Status on 2026-10-20: integration baseline. The code is merged and building
-in CI; it has not been run against a physical iOS device yet. Treat every
-Files-app behavior below as code-level until a device run is recorded.
+Status on 2026-10-20 (evening): integration baseline plus the first
+independent review round. The extension builds in CI and all 1334 unit
+tests pass. Content replacement uses `posix-rename@openssh.com`, verified
+end-to-end against a real OpenSSH SFTP server from a Linux probe of the
+pinned Citadel fork. The code has still not been run on a physical iOS
+device; treat Files-app behavior as code-level until a device run is
+recorded.
 
 ## What the extension implements
 
@@ -81,6 +85,18 @@ empty or stale location.
   automatically; there is no in-app file browser.
 - App Group and Keychain Sharing must be enabled in the provisioning profile
   used to sign both targets. Simulator builds do not prove this.
+- Content replacement requires `posix-rename@openssh.com` (OpenSSH and most
+  modern servers advertise it). On a server without the extension an in-place
+  save fails with a sync error instead of silently skipping; the Citadel fork
+  falls back to a plain rename only where that is correct.
+- A pure case-only rename (e.g. `foo.txt` to `FOO.txt`) is rejected as an
+  occupied destination because collision checks are case-insensitive; this
+  matches case-insensitive filesystems and is over-strict on case-sensitive
+  ones.
+- Between the mutation's final-component check and the remote call, a
+  malicious server-side writer could still swap in an escaping symlink
+  (residual TOCTOU); each mutation re-resolves the canonical path first,
+  which narrows the window but cannot close it.
 
 ## Build and test
 
