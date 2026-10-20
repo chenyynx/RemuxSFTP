@@ -324,7 +324,13 @@ final class RemuxSFTPReadOnlyClientTests: XCTestCase {
         } catch is CancellationError {
         }
 
-        let closeCount = await source.closeCount()
+        // The cancelled close runs in a detached task that survives the
+        // ambient cancellation, so wait for it instead of racing it.
+        var closeCount = await source.closeCount()
+        for _ in 0..<2_000 where closeCount == 0 {
+            try await Task.sleep(for: .milliseconds(1))
+            closeCount = await source.closeCount()
+        }
         let mutations = await connection.mutations()
         XCTAssertEqual(closeCount, 1)
         XCTAssertEqual(mutations, [
